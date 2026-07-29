@@ -20,6 +20,23 @@ This repository provides lifecycle hook scripts designed to integrate Cybervisor
 
 ---
 
+## 📦 Installation
+
+Clone this repository into your `~/.cybervisor/hooks` directory:
+
+```bash
+mkdir -p ~/.cybervisor
+git clone https://github.com/crzidea/.cybervisor-hooks.git ~/.cybervisor/hooks
+```
+
+Ensure the scripts have execution permissions:
+
+```bash
+chmod +x ~/.cybervisor/hooks/*.sh
+```
+
+---
+
 ## ⚙️ Configuration & Requirements
 
 ### 1. Telegram Credentials
