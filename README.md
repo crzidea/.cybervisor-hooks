@@ -48,7 +48,17 @@ CYBERVISOR_TELEGRAM_BOT_TOKEN="your_bot_token_here"
 CYBERVISOR_TELEGRAM_CHAT_ID="your_chat_id_here"
 ```
 
-### 2. Environment Variables
+### 2. Cybervisor Configuration (`cybervisor.yaml`)
+
+Add the hooks to your `cybervisor.yaml` configuration file:
+
+```yaml
+hooks:
+  before_stage: ~/.cybervisor/hooks/send-stage-notification.sh
+  after_stage: ~/.cybervisor/hooks/send-stage-notification.sh
+```
+
+### 3. Environment Variables
 
 The scripts accept the following environment variables (automatically set by Cybervisor or configured manually):
 
