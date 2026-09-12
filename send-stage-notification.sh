@@ -9,7 +9,12 @@ MAX_RETRIES="${CYBERVISOR_STAGE_MAX_RETRIES:-1}"
 STAGE_SUCCESS="${CYBERVISOR_STAGE_SUCCESS:-}"
 
 WORKSPACE_NAME="$(basename "$PWD")"
-WORKSPACE_KEY="$(printf '%s' "${PWD}" | md5sum | awk '{print $1}')"
+if command -v md5sum >/dev/null 2>&1; then
+  WORKSPACE_KEY="$(printf '%s' "${PWD}" | md5sum | awk '{print $1}')"
+else
+  # macOS ships md5 instead of the GNU md5sum utility.
+  WORKSPACE_KEY="$(printf '%s' "${PWD}" | md5 -q)"
+fi
 STATE_DIR="${HOME}/.cybervisor/hooks/state"
 BASELINE_FILE="${STATE_DIR}/baseline_${WORKSPACE_KEY}.txt"
 
@@ -22,10 +27,8 @@ escape_html() {
 }
 
 discover_repos() {
-  local repos=()
-
   if git -C . rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-    repos+=(".")
+    printf '%s\n' "."
   fi
 
   while IFS= read -r git_entry; do
@@ -34,25 +37,22 @@ discover_repos() {
       dir="$(dirname "${git_entry#./}")"
       if [[ "${dir}" != "." && "${dir}" != ".." && "${dir}" != .* && "${dir}" != */.* && "${dir}" != *node_modules* && "${dir}" != *venv* ]]; then
         if git -C "${dir}" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-          repos+=("${dir}")
+          printf '%s\n' "${dir}"
         fi
       fi
     fi
   done < <(find . -mindepth 2 \( -name .git \) 2>/dev/null | sort)
-
-  printf '%s\n' "${repos[@]}"
 }
 
 record_baseline() {
   mkdir -p "${STATE_DIR}"
-  mapfile -t repos < <(discover_repos)
-  local tmp_file
+  local tmp_file repo
   tmp_file="$(mktemp)"
-  for repo in "${repos[@]}"; do
+  while IFS= read -r repo; do
     local head
     head="$(git -C "${repo}" rev-parse HEAD 2>/dev/null || true)"
     printf '%s\t%s\n' "${repo}" "${head}" >> "${tmp_file}"
-  done
+  done < <(discover_repos)
   mv "${tmp_file}" "${BASELINE_FILE}"
 }
 
@@ -87,10 +87,9 @@ MESSAGE="<b>Workspace:</b> <code>${SAFE_WORKSPACE}</code>
 <b>Attempt:</b> <code>${SAFE_ATTEMPT}</code>"
 
 if [[ "${STAGE_NAME}" == "Commit" && "${HOOK_PHASE}" != "before_stage" && -n "${STAGE_SUCCESS}" ]]; then
-  mapfile -t repos < <(discover_repos)
   COMMIT_REPORT=""
 
-  for repo in "${repos[@]}"; do
+  while IFS= read -r repo; do
     repo_name="${repo#./}"
     if [[ "${repo_name}" == "." ]]; then
       repo_name="workspace"
@@ -128,7 +127,7 @@ if [[ "${STAGE_NAME}" == "Commit" && "${HOOK_PHASE}" != "before_stage" && -n "${
         fi
       done <<< "${commit_hashes}"
     fi
-  done
+  done < <(discover_repos)
 
   if [[ -n "${COMMIT_REPORT}" ]]; then
     MESSAGE+=$'\n\n<b>📌 Commit Report</b>'"${COMMIT_REPORT}"

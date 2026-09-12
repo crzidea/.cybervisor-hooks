@@ -39,6 +39,8 @@ chmod +x ~/.cybervisor/hooks/*.sh
 
 ## ⚙️ Configuration & Requirements
 
+Supports Linux and macOS, including the Bash 3.2 bundled with macOS. Requires Bash, Git, curl, standard command-line utilities, and either `md5sum` (Linux) or `md5` (macOS). `jq` is optional and enables displaying the Telegram message ID.
+
 ### 1. Telegram Credentials
 
 Create a environment configuration file at `~/.cybervisor/telegram.env` (or pass a custom path via `CYBERVISOR_TELEGRAM_ENV_FILE`):
